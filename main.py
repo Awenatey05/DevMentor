@@ -1,4 +1,5 @@
 import requests 
+from prompts import SYSTEM_PROMPT
 
 OLLAMA_HOST = "http://localhost:11434"
 MODEL_NAME = "llama3.2:latest"
@@ -56,6 +57,34 @@ def ask_llm(prompt, model=MODEL_NAME):
     
     return response.json()["response"]
 
+def chat_llm(messages):
+
+    model = MODEL_NAME
+    base_url = OLLAMA_HOST
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "stream": False
+    }
+
+    response = requests.post(
+        f"{base_url}/api/chat",
+        json=payload,
+        timeout=120
+    )
+    response.raise_for_status()
+
+    return response.json()["message"]["content"]
+
+def prompt_assistant(user_prompt, system_prompt):
+    messages = [
+        {"role": "system",
+         "content": system_prompt},
+        {"role": "user",
+         "content": user_prompt}
+    ]
+    return chat_llm(messages)
 
 # ------------------------------------------------
 # Application
@@ -81,7 +110,7 @@ else:
         if prompt.lower() == "exit":
             break
         
-        answer = ask_llm(prompt)
+        answer = prompt_assistant(prompt, SYSTEM_PROMPT)
         
         print("\nDevMentor:")
         print(answer)

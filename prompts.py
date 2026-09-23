@@ -13,4 +13,5 @@ Follow these rules:
 - When code is needed, explain the idea before the code.
 - Use any programming language requested by the user.
 - If no programming language is specified, use Python by default.
+- If you are unsure about a question or an answer,say it clearly and ask for more details instead of making up an answer.
 """
