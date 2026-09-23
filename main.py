@@ -77,15 +77,32 @@ def chat_llm(messages):
 
     return response.json()["message"]["content"]
 
-def prompt_assistant(user_prompt, system_prompt):
-    messages = [
-        {"role": "system",
-         "content": system_prompt},
-        {"role": "user",
-         "content": user_prompt}
-    ]
-    return chat_llm(messages)
+# def prompt_assistant(user_prompt, system_prompt):
+#     messages = [
+#         {"role": "system",
+#          "content": system_prompt},
+#         {"role": "user",
+#          "content": user_prompt}
+#     ]
+#     return chat_llm(messages)
 
+# Part 3 version — uses conversation memory
+def prompt_assistant(user_prompt):
+    messages.append(
+        {"role": "user", "content": user_prompt}
+    )
+
+    reply = chat_llm(messages)
+
+    messages.append(
+        {"role": "assistant", "content": reply}
+    )
+
+    return reply
+
+messages = [
+    {"role": "system", "content": SYSTEM_PROMPT}
+]
 # ------------------------------------------------
 # Application
 # ------------------------------------------------
@@ -102,16 +119,43 @@ else:
         print("-", model)
     
     print("\nDevMentor:")
-    print("Type 'exit' to stop.\n")
+    print("Type /exit to stop.")
+    print("Type /reset to clear the conversation.")
+    print("Type /history to view the conversation.\n")
     
     while True:
         prompt = input("You: ")
-        
-        if prompt.lower() == "exit":
+
+        if prompt.lower() == "/exit":
             break
-        
-        answer = prompt_assistant(prompt, SYSTEM_PROMPT)
-        
+
+        if prompt.lower() == "/reset":
+            messages.clear()
+            messages.append(
+                {"role": "system", "content": SYSTEM_PROMPT}
+            )
+            print("\nConversation reset.\n")
+            continue
+
+        if prompt.lower() == "/history":
+            for message in messages:
+                print(f"{message['role']}: {message['content']}")
+            print()
+            continue
+
+        answer = prompt_assistant(prompt)
+
         print("\nDevMentor:")
         print(answer)
         print()
+
+    
+        # Part 2 version
+        # answer = prompt_assistant(prompt, SYSTEM_PROMPT)
+
+        # # Part 3 version
+        # answer = prompt_assistant(prompt)
+        
+        # print("\nDevMentor:")
+        # print(answer)
+        # print()
