@@ -1,7 +1,7 @@
 import requests 
 from prompts import SYSTEM_PROMPT
 
-OLLAMA_HOST = "http://localhost:11434"
+OLLAMA_URL = "http://localhost:11434"
 MODEL_NAME = "llama3.2:latest"
 
 
@@ -10,7 +10,7 @@ def check_ollama():
     """Check whether Ollama is available."""
     try:
         response = requests.get(
-            f"{OLLAMA_HOST}/api/tags",
+            f"{OLLAMA_URL}/api/tags",
             timeout=10
         )
         response.raise_for_status()
@@ -24,7 +24,7 @@ def list_models():
     """Return locally available Ollama models."""
     
     response = requests.get(
-        f"{OLLAMA_HOST}/api/tags",
+        f"{OLLAMA_URL}/api/tags",
         timeout=10
     )
     
@@ -48,7 +48,7 @@ def ask_llm(prompt, model=MODEL_NAME):
     }
     
     response = requests.post(
-        f"{OLLAMA_HOST}/api/generate",
+        f"{OLLAMA_URL}/api/generate",
         json=payload,
         timeout=120
     )
@@ -60,7 +60,7 @@ def ask_llm(prompt, model=MODEL_NAME):
 def chat_llm(messages):
 
     model = MODEL_NAME
-    base_url = OLLAMA_HOST
+    base_url = OLLAMA_URL
 
     payload = {
         "model": model,
@@ -110,26 +110,34 @@ messages = [
 if not check_ollama():
     print("\nOllama is not running.")
 else:
-    
+
     print("\nOllama is running.")
-    
+
     print("\nAvailable models:")
-    
+
     for model in list_models():
         print("-", model)
-    
+
     print("\nDevMentor:")
     print("Type /exit to stop.")
     print("Type /reset to clear the conversation.")
     print("Type /history to view the conversation.\n")
-    
-    while True:
-        prompt = input("You: ")
 
-        if prompt.lower() == "/exit":
+    while True:
+        prompt = input("You: ").strip()
+
+        if not prompt:
+            print("Please enter a message.")
+            continue
+
+        command = prompt.lower()
+
+        if command == "/exit":
+
+            print("Goodbye!")
             break
 
-        if prompt.lower() == "/reset":
+        if command == "/reset":
             messages.clear()
             messages.append(
                 {"role": "system", "content": SYSTEM_PROMPT}
@@ -137,25 +145,28 @@ else:
             print("\nConversation reset.\n")
             continue
 
-        if prompt.lower() == "/history":
+        if command == "/history":
             for message in messages:
                 print(f"{message['role']}: {message['content']}")
             print()
             continue
 
-        answer = prompt_assistant(prompt)
+        try:
+            answer = prompt_assistant(prompt)
+
+        except requests.exceptions.ConnectionError:
+            print("\nERROR: Could not connect to Ollama.")
+            messages.pop()
+            continue
+
+        except requests.exceptions.RequestException as error:
+            print(f"\nAPI ERROR: {error}")
+            messages.pop()
+            continue
 
         print("\nDevMentor:")
         print(answer)
         print()
 
     
-        # Part 2 version
-        # answer = prompt_assistant(prompt, SYSTEM_PROMPT)
-
-        # # Part 3 version
-        # answer = prompt_assistant(prompt)
-        
-        # print("\nDevMentor:")
-        # print(answer)
-        # print()
+       
