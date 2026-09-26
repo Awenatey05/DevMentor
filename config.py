@@ -1,3 +1,10 @@
+import os
+
+from dotenv import load_dotenv
+
 APP_NAME = "DevMentor"
-MODEL_NAME = "llama3.2:latest"
-OLLAMA_URL = "http://localhost:11434"
+
+load_dotenv()
+
+OLLAMA_URL = os.getenv("OLLAMA_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")

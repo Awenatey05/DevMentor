@@ -1,8 +1,8 @@
-import requests 
+import requests
+
+from config import OLLAMA_URL, MODEL_NAME
 from prompts import SYSTEM_PROMPT
 
-OLLAMA_URL = "http://localhost:11434"
-MODEL_NAME = "llama3.2:latest"
 
 
 # Check if Ollama is available 
