@@ -146,10 +146,14 @@ else:
             continue
 
         if command == "/history":
-            for message in messages:
+            messages_to_show = messages[1:]
+
+            for message in messages_to_show:
                 print(f"{message['role']}: {message['content']}")
+
             print()
             continue
+
 
         try:
             answer = prompt_assistant(prompt)
