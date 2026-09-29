@@ -9,17 +9,17 @@ DevMentor does not rely on external AI APIs. The language model runs locally thr
 
 ## Features
 
-- Local conversational AI using Ollama.
-- System prompt to define the assistant's role and behaviour.
-- Conversation history and context.
-- Dynamic user input.
-- `/reset` command to clear the conversation.
-- `/history` command to display the conversation history without displaying the system prompt as part of the chat.
-- `/exit` command to close the application with a goodbye message.
-- Handles empty user input.
-- Checks whether Ollama is running before starting.
-- Displays available local models.
-- Handles connection and request errors without showing a raw traceback.
+- Local conversational AI using Ollama
+- System prompt
+- Conversation history/context
+- Dynamic input
+- /reset
+- /history
+- /exit
+- Empty input handling
+- Checks if Ollama is running
+- Displays local models
+- Handles connection/request errors
 
 ## Architecture
 
@@ -29,7 +29,7 @@ User → Python Application → Conversation History → Ollama API → Local LL
 
 - **User:** Enters questions or commands through the terminal.
 - **Python Application:** Receives the user's input, manages commands and conversation history and sends requests to Ollama.
-- **Conversation History:** The conversation is stored in the Python application's messages list. User and assistant messages are kept and sent as context with each chat request. When /reset is used, the previous conversation messages are cleared and the system prompt is added again. When /history is used, the system prompt is excluded from the displayed history while user and assistant messages are shown. After a reset, /history displays no messages until a new conversation begins.
+- **Conversation History:** The conversation is stored in the Python application's messages list. User and assistant messages are kept and sent as context with each chat request.
 - **Ollama API:** Acts as the local API between the Python application and the language model.
 - **Local LLM:** The selected model runs locally through Ollama and generates the response.
 - **Response:** The generated response is returned to the Python application and displayed to the user.
@@ -94,6 +94,7 @@ messages = [
 When the user sends a message, it is added to the messages list. The application then sends the complete list to Ollama when making the chat request. After Ollama generates a response, the assistant's response is also added to the list.
 
 This allows previous messages to be sent as context with later requests which allows multi-turn conversations.
+
 - The /reset command clears the existing conversation messages and adds the system prompt again:
 
 messages.clear()
@@ -101,29 +102,24 @@ messages.append(
     {"role": "system", "content": SYSTEM_PROMPT}
 )
 
-This means the assistant starts a new conversation while keeping its defined role and behaviour from the system prompt.
-System prompt -> User message -> Assistant response -> User message ->Assistant response
-The language model does not independently maintain the conversation history between requests. The Python application maintains the conversation state and sends the relevant message history to Ollama with each request.
+After a reset, the previous user and assistant messages are no longer part of the conversation.
+
 - The /history command displays the user and assistant messages stored in the current conversation.
 
 The system prompt is excluded from the displayed history:
 
 messages_to_show = messages[1:]
 
-The system prompt remains in the original messages list and continues to be available to the application.
+This removes the first item in the list, which is the system prompt.
 
 - After /reset, there are no user or assistant messages to display until a new message is entered.
 
-## Error Handling
+# Error Handling
 
 DevMentor includes basic error handling so that common problems do not cause the application to crash with a raw traceback.
 
 # Ollama Connection Check
 Before starting the chat, the application checks whether Ollama is available using the /api/tags endpoint.
-
-If Ollama is not running or cannot be reached, the application displays:
-
-Ollama is not running.
 
 This prevents the application from entering the chat loop when the Ollama service is unavailable.
 
@@ -131,7 +127,6 @@ This prevents the application from entering the chat loop when the Ollama servic
 
 If the user submits an empty message, the application displays: Please enter a message.
 
-The application then continues waiting for another input instead of sending an empty request to the model.
 
 # Connection and API Errors
 Errors that occur while communicating with Ollama are handled using try/except blocks.
@@ -142,14 +137,53 @@ Other request-related errors display an API error message without showing a raw 
 
 If a request fails after a user message has been added to the conversation, the application removes that message so that an unsuccessful request does not remain in the conversation history.
 
+## Commands
+
+| Command | Description |
+|---|---|
+| `/reset` | Clears the conversation history |
+| `/history` | Shows the current conversation |
+| `/exit` | Exits the application |
+
+
+## Project Structure
+DevMentor/
+├── main.py
+├── prompts.py
+├── config.py
+├── requirements.txt
+├── README.md
+└── images/
+    └── architecture.png
+
+## Application Flow
+
+The application works by:
+
+Starting the Python application.
+Checking if Ollama is running.
+Initializing the messages list with the system prompt.
+Receiving user input.
+Checking for commands or empty input.
+Adding the user message to the conversation history.
+Sending the conversation history to Ollama.
+Receiving the response from the local LLM.
+Adding the assistant response to the conversation history.
+Displaying the response to the user.
+Waiting for the next message.
+
+The process continues until the user enters /exit.
+
 ## Prompt Experiment
 
 The prompt experiment was used to investigate how different system prompts affect the behaviour and responses of the same local language model.
 Three system prompts were tested:
 
-Prompt A: A minimal prompt that only defines the assistant as a programming assistant.
-Prompt B: Adds instructions about helping junior developers, using simple explanations, breaking difficult topics into smaller steps and providing practical examples.
-Prompt C: Adds more specific behavioural constraints including explaining the concept before showing code, keeping introductions short, breaking complex explanations into smaller steps and using Python by default.
+| Prompt | Description |
+|---|---|
+| `Prompt A` | A minimal prompt that only defines the assistant as a programming assistant. |
+| `Prompt B` | Adds instructions about helping junior developers, using simple explanations, breaking difficult topics into smaller steps and providing practical examples. |
+| `Prompt C` | Adds more specific behavioural constraints including explaining the concept before showing code, keeping introductions short, breaking complex explanations into smaller steps and using Python by default. |
 
 The same three questions were used with each prompt:
 Explain REST APIs.
@@ -193,6 +227,7 @@ Adding more instructions did not automatically make the responses better. Prompt
 
 5. What happened when an instruction was vague?
 When an instruction is vague like prompt A, it allows the assistant to be free in explanations and gives explanations without considering ones level of knowledge. Giving clear instructions redefines how the assistant responds to a question from the user.
+
 
 ## Memory Investigations
 
